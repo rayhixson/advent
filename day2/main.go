@@ -7,11 +7,17 @@ import (
 )
 
 func main() {
+	ids := []string{}
 	totalTwos, totalThrees := 0, 0
 	scanner := bufio.NewScanner(strings.NewReader(boxids))
 	for scanner.Scan() {
 		val := scanner.Text()
+		if val != "" {
+			ids = append(ids, val)
+		}
+	}
 
+	for _, val := range ids {
 		twos, threes := countDupes(val)
 		if twos {
 			totalTwos += 1
@@ -22,6 +28,26 @@ func main() {
 	}
 
 	fmt.Printf("Final 2s [%v], 3s [%v] = %v\n", totalTwos, totalThrees, (totalTwos * totalThrees))
+
+	var matched *string
+	for _, a := range ids {
+		for _, b := range ids {
+			if a == b {
+				continue
+			}
+			if differ, value := differByOne(a, b); differ {
+				// we'll find it twice because there are two values that match - make sure they're the same
+				if matched != nil {
+					if *matched != value {
+						panic(fmt.Sprintf("Found too many matched: %s, %s", *matched, value))
+					}
+				} else {
+					matched = &value
+					fmt.Printf("This string is common [%s] to [%s] and [%s]\n", *matched, a, b)
+				}
+			}
+		}
+	}
 }
 
 func countDupes(s string) (hasTwo bool, hasThree bool) {
@@ -41,6 +67,22 @@ func countDupes(s string) (hasTwo bool, hasThree bool) {
 	}
 
 	return hasTwo, hasThree
+}
+
+func differByOne(a, b string) (bool, string) {
+	if len(a) != len(b) {
+		panic(fmt.Sprintf("lengths don't match: %v != %v", a, b))
+	}
+
+	for i, _ := range a {
+		minusa := fmt.Sprintf("%s%s", a[:i], a[(i+1):])
+		minusb := fmt.Sprintf("%s%s", b[:i], b[(i+1):])
+		if minusa == minusb {
+			return true, minusa
+		}
+	}
+
+	return false, ""
 }
 
 const boxids = `

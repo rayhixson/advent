@@ -3,22 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 )
 
 func main() {
-	final, err := sum(changes)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Final: %v\n", final)
-}
-
-func sum(changes string) (int, error) {
-	net := 0
-	scanner := bufio.NewScanner(strings.NewReader(changes))
+	changes := []int{}
+	scanner := bufio.NewScanner(strings.NewReader(data))
 	for scanner.Scan() {
 		val := scanner.Text()
 		n, err := strconv.Atoi(val)
@@ -26,13 +17,41 @@ func sum(changes string) (int, error) {
 			// skip unparsable
 			continue
 		}
+		changes = append(changes, n)
+	}
+
+	final := sum(changes)
+	fmt.Printf("Final Sum: %v\n", final)
+
+	fmt.Printf("First Frequency to repeat: %v\n", findRepeat(changes))
+}
+
+func findRepeat(data []int) int {
+	net := 0
+	sums := map[int]bool{0: true} // 0 is initial freq
+	maxLoops := 10000 * len(data) // don't try forever
+	for i := 0; i < maxLoops; i++ {
+		currentVal := data[i%len(data)]
+		net += currentVal
+		if _, ok := sums[net]; ok {
+			return net
+		}
+		sums[net] = true
+		//fmt.Printf("curr: %d, net: %d, sums: %v\n", currentVal, net, sums)
+	}
+	return -9999999999999999 // not likely
+}
+
+func sum(changes []int) int {
+	net := 0
+	for _, n := range changes {
 		net += n
 	}
 
-	return net, nil
+	return net
 }
 
-const changes = `
+const data = `
 -4
 +9
 +6

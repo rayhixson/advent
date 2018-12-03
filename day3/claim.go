@@ -28,16 +28,19 @@ func ParseClaim(line string) Claim {
 	return c
 }
 
-func (c Claim) findOverlaps(other Claim, points *PointsMap) {
+func (c Claim) findOverlaps(other Claim, points *PointsMap) bool {
+	hasAnyOvers := false
 	for i := 0; i < c.width; i++ {
 		xval := i + c.xOffset
 		for j := 0; j < c.height; j++ {
 			yval := j + c.yOffset
 			if other.contains(xval, yval) {
+				hasAnyOvers = true
 				(*points)[xval][yval] += 1
 			}
 		}
 	}
+	return hasAnyOvers
 }
 
 func (c Claim) contains(x, y int) bool {

@@ -30,6 +30,35 @@ func findOverlappingSquares(claims []Claim, points *PointsMap) {
 	}
 }
 
+func findNoOverlaps(claims []Claim, points PointsMap) int {
+	idThatHasNoOverLaps := 0
+	for _, claimA := range claims {
+		hasAnyOvers := false
+
+		for i, x := range points {
+			for j, val := range x {
+				if val > 0 {
+					if claimA.contains(i, j) {
+						hasAnyOvers = true
+						break
+					}
+				}
+			}
+			if hasAnyOvers {
+				break
+			}
+		}
+
+		if !hasAnyOvers {
+			if idThatHasNoOverLaps > 0 {
+				panic(fmt.Sprintf("Expected only one id to not overlap: %v\n", claimA.id))
+			}
+			idThatHasNoOverLaps = claimA.id
+		}
+	}
+	return idThatHasNoOverLaps
+}
+
 func main() {
 	claims := []Claim{}
 	scanner := bufio.NewScanner(strings.NewReader(data))
@@ -44,6 +73,8 @@ func main() {
 
 	findOverlappingSquares(claims, &overlappingPoints)
 	fmt.Printf("Number of overlapping squares: %v\n", overlappingPoints.countNonEmpty())
+	id := findNoOverlaps(claims, overlappingPoints)
+	fmt.Printf("The ID that has no overlaps: %d\n", id)
 }
 
 const data = `

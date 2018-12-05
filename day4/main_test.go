@@ -51,4 +51,10 @@ func TestBasic(t *testing.T) {
 	if min != 24 {
 		t.Errorf("Wrong minute: %v (count: %v)", min, count)
 	}
+
+	guard, minute, amount := findGuardMostAsleepMinute(guardLogs)
+
+	if guard != "#99" || minute != 45 {
+		t.Errorf("Wrong: %v, %v (total times sleeping on that minute: %v)", guard, minute, amount)
+	}
 }

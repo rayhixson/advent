@@ -99,6 +99,21 @@ func captureShifts(logs []LogEntry) GuardLogs {
 	return guardLogs
 }
 
+func findGuardMostAsleepMinute(logs GuardLogs) (guard string, minute, frequency int) {
+	biggestMinuteVal := 0
+
+	for gid, mins := range logs {
+		for m, count := range mins {
+			if count > biggestMinuteVal {
+				biggestMinuteVal = count
+				minute = m
+				guard = gid
+			}
+		}
+	}
+	return guard, minute, biggestMinuteVal
+}
+
 func findMaxSleeper(logs GuardLogs) string {
 	var maxGuard string
 	max := 0
@@ -149,6 +164,10 @@ func main() {
 	fmt.Printf("Minute [%v] and count [%v]\n", min, count)
 
 	fmt.Printf("Multiplied: %v\n", (num(guard[1:]) * min))
+
+	guard, minute, amount := findGuardMostAsleepMinute(guardLogs)
+	fmt.Printf("Guard [%v], Minute [%v], Freq [%v], Multiplied: %v\n",
+		guard, minute, amount, (num(guard[1:]) * minute))
 }
 
 const data = `

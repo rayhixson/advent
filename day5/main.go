@@ -8,12 +8,45 @@ func main() {
 	fmt.Println("Start:")
 	out(data)
 
-	final := extract(data)
+	final := reduce(data)
 	fmt.Println("Final:")
 	out(final)
+
+	s, n := findShortestEdited(data)
+	fmt.Println("Shortest after removal:", s, n)
 }
 
-func extract(data string) string {
+func findShortestEdited(data string) (string, int) {
+	shortestLen := -1
+	shortestLetter := -1
+
+	A := 65
+	Z := A + 26
+	for i := A; i < (A + Z + 1); i++ {
+		reduced := removeAndReduce(data, i)
+		if len(reduced) < shortestLen || shortestLen == -1 {
+			shortestLen = len(reduced)
+			shortestLetter = i
+		}
+	}
+
+	return string(shortestLetter), shortestLen
+}
+
+func removeAndReduce(data string, c int) string {
+	shorter := ""
+
+	for i := 0; i < len(data); i++ {
+		n := int(data[i])
+		if n != c && n != (c+32) {
+			shorter += string(n)
+		}
+	}
+
+	return reduce(shorter)
+}
+
+func reduce(data string) string {
 	s := stack{}
 
 	for i := len(data) - 1; i >= 0; i-- {

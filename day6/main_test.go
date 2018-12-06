@@ -3,10 +3,8 @@ package main
 import "testing"
 
 func TestGivenAreas(t *testing.T) {
-	coords := parse(data)
-	g := populateGrid(coords)
-
-	dumpGrid(g)
+	coords := parse(testdata)
+	g := populateDistances(coords)
 
 	for _, c := range coords {
 		switch c.id {
@@ -34,7 +32,7 @@ func checkArea(t *testing.T, g grid, c point, expected int) {
 }
 
 func TestGivenLargest(t *testing.T) {
-	coords := parse(data)
+	coords := parse(testdata)
 
 	c, _ := findLargestArea(coords)
 
@@ -43,7 +41,16 @@ func TestGivenLargest(t *testing.T) {
 	}
 }
 
-const data = `
+func TestCloserRegion(t *testing.T) {
+	coords := parse(testdata)
+	points := findClosePoints(coords, 32)
+
+	if len(points) != 16 {
+		t.Errorf("Wrong number of points under 32: %d\n", 16)
+	}
+}
+
+const testdata = `
 1, 1
 1, 6
 8, 3

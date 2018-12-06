@@ -34,8 +34,20 @@ func findArea(c *point, g grid) {
 	}
 }
 
+func populateDistances(coords []point) grid {
+	g := startGrid(coords)
+	// label the nearest to each point
+	for i := 0; i < len(g); i++ {
+		for j := 0; j < len(g[len(g)-1]); j++ {
+			g[i][j] = findClosestID(i, j, g, coords)
+		}
+	}
+
+	return g
+}
+
 func findLargestArea(coords []point) (point, grid) {
-	g := populateGrid(coords)
+	g := populateDistances(coords)
 
 	big := point{}
 	for _, c := range coords {
@@ -47,14 +59,27 @@ func findLargestArea(coords []point) (point, grid) {
 	return big, g
 }
 
-func findClosestID(x, y int, g grid, coords []point) (coordID int) {
-	abs := func(x int) int {
-		if x < 0 {
-			return -1 * x
-		}
-		return x
-	}
+func findClosePoints(coords []point, limit int) (points []point) {
+	g := startGrid(coords)
 
+	// sum the distance from this one point to every coord
+	for i := 0; i < len(g); i++ {
+		for j := 0; j < len(g[len(g)-1]); j++ {
+
+			sum := 0
+			for _, c := range coords {
+				sum += abs(i-c.x) + abs(j-c.y)
+			}
+
+			if sum < limit {
+				points = append(points, point{i + j, i, j, 0})
+			}
+		}
+	}
+	return points
+}
+
+func findClosestID(x, y int, g grid, coords []point) (coordID int) {
 	// find the distance from this one point to every coord
 	var minCoordA point
 	var minCoordB point
@@ -80,7 +105,7 @@ func findClosestID(x, y int, g grid, coords []point) (coordID int) {
 	return minCoordA.id
 }
 
-func populateGrid(coords []point) grid {
+func startGrid(coords []point) grid {
 	maxX, maxY := 0, 0
 	for _, c := range coords {
 		if c.x > maxX {
@@ -104,13 +129,6 @@ func populateGrid(coords []point) grid {
 	// place the coords
 	for _, c := range coords {
 		g[c.x][c.y] = c.id
-	}
-
-	// label the nearest to each point
-	for i := 0; i < len(g); i++ {
-		for j := 0; j < len(g[len(g)-1]); j++ {
-			g[i][j] = findClosestID(i, j, g, coords)
-		}
 	}
 
 	return g
@@ -161,6 +179,16 @@ func main() {
 	c, _ := findLargestArea(coords)
 
 	fmt.Printf("Largest: %+v\n", c)
+
+	points := findClosePoints(coords, 10000)
+	fmt.Printf("Size of dense region: %d\n", len(points))
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -1 * x
+	}
+	return x
 }
 
 const data = `

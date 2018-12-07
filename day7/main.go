@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 type Step struct {
 	id      string
 	parents []*Step
+	done    bool
 }
 
 func (s Step) String() string {
@@ -62,7 +64,36 @@ func (ss Steps) delete(dels Step) Steps {
 	return ss
 }
 
-func determineSequence(steps Steps, sequence string) string {
+type Worker struct {
+	id          int
+	currentStep *Step
+	startTime   int
+	willTake    int
+}
+
+// isCompleted checks the clock, if done returns the step
+func (w *Worker) isCompleted(clock int) *Step {
+	if (clock - w.startTime) > w.willTake {
+		c := w.currentStep
+		w.currentStep = nil
+		c.done = true
+		return c
+	}
+	return nil
+}
+
+func (w *Worker) assign(s *Step) bool {
+	if w.currentStep != nil {
+		return false
+	}
+	w.currentStep = s
+	w.willTake = num(w.currentStep.id) - 'A' + 1
+	//w.willTake += 60
+
+	return true
+}
+
+func determineSequence(steps Steps, completed *Steps) {
 	noParents := func() Steps {
 		var ts Steps
 		for _, s := range steps {
@@ -75,19 +106,28 @@ func determineSequence(steps Steps, sequence string) string {
 
 	nexts := noParents()
 	if len(nexts) == 0 {
-		return sequence
+		// we're done
+		return
 	}
 
 	sort.Slice(nexts, func(i, j int) bool {
 		return nexts[i].id < nexts[j].id
 	})
-	sequence += nexts[0].id
-	steps = steps.delete(nexts[0])
+
+	finished := assignWork(nexts)
+	for _, s := range finished {
+		steps = steps.delete(s)
+	}
+	*completed = append(*completed, finished...)
 
 	if len(steps) > 0 {
-		return determineSequence(steps, sequence)
+		determineSequence(steps, completed)
 	}
-	return sequence
+	return
+}
+
+func assignWork(nexts Steps) (completed Steps) {
+	return Steps{nexts[0]}
 }
 
 func parse(d string) []Step {
@@ -112,8 +152,17 @@ func parse(d string) []Step {
 func main() {
 	steps := parse(data)
 
-	final := determineSequence(steps, "")
+	final := Steps{}
+	determineSequence(steps, &final)
 	fmt.Println("Instruction sequence:", final)
+}
+
+func num(s string) int {
+	i, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		panic(err)
+	}
+	return i
 }
 
 const data = `

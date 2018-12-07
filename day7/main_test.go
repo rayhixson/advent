@@ -1,17 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestGiven(t *testing.T) {
 	steps := parse(tdata)
 
-	final := determineSequence(steps, "")
+	final := Steps{}
+	determineSequence(steps, &final)
 
-	if final != "CABDFE" {
+	fmt.Println(final)
+	seq := ""
+	for _, s := range final {
+		seq += s.id
+	}
+	if seq != "CABDFE" {
 		t.Error("Wraong ", final)
 	}
+}
+
+func TestPart2(t *testing.T) {
 }
 
 const tdata = `

@@ -9,19 +9,20 @@ func TestGiven(t *testing.T) {
 	steps := parse(tdata)
 
 	final := Steps{}
-	determineSequence(steps, &final)
+	w := Workers{&Worker{id: 1}, &Worker{id: 2}}
+	clock := 0
+	sequenceAndAssignSteps(&steps, &final, &w, &clock)
+
+	fmt.Println("Time:", clock)
 
 	fmt.Println(final)
 	seq := ""
 	for _, s := range final {
 		seq += s.id
 	}
-	if seq != "CABDFE" {
+	if seq != "CABFDE" {
 		t.Error("Wraong ", final)
 	}
-}
-
-func TestPart2(t *testing.T) {
 }
 
 const tdata = `

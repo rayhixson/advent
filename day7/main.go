@@ -4,65 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 )
 
-type Step struct {
-	id      string
-	parents []*Step
-	done    bool
-}
-
-func (s Step) String() string {
-	ps := "("
-	for _, p := range s.parents {
-		ps += p.id
-	}
-	ps += ")"
-	return fmt.Sprintf("%s: parents: %s", s.id, ps)
-}
-
-type Steps []Step
-
-func (ss *Steps) add(newid string, newparent *Step) *Step {
-	for i, s := range *ss {
-		if s.id == newid {
-			if newparent != nil {
-				(*ss)[i].parents = append(s.parents, newparent)
-			}
-			return &s
-		}
-	}
-
-	s := Step{id: newid}
-	if newparent != nil {
-		s.parents = append(s.parents, newparent)
-	}
-	*ss = append(*ss, s)
-	return &s
-}
-
-func (ss Steps) delete(dels Step) Steps {
-	index := -1
-	for i, s := range ss {
-		if s.id == dels.id {
-			index = i
-		}
-		// remove parent refs
-		for j, p := range s.parents {
-			if p.id == dels.id {
-				ss[i].parents = append(s.parents[:j], s.parents[j+1:]...)
-			}
-		}
-	}
-
-	// remove from array
-	if index >= 0 {
-		return append(ss[:index], ss[index+1:]...)
-	}
-	return ss
-}
+const extra_time = 60
+const worker_count = 5
 
 type Worker struct {
 	id          int
@@ -71,68 +17,104 @@ type Worker struct {
 	willTake    int
 }
 
+type Workers []*Worker
+
 // isCompleted checks the clock, if done returns the step
 func (w *Worker) isCompleted(clock int) *Step {
-	if (clock - w.startTime) > w.willTake {
+	if w.currentStep == nil {
+		//fmt.Printf("Worker [%v], idle\n", w.id)
+		return nil
+	}
+
+	if (clock - w.startTime) >= w.willTake {
 		c := w.currentStep
 		w.currentStep = nil
 		c.done = true
+		//fmt.Printf("Worker [%v], done with [%s], in time [%v]\n", w.id, c.id, (clock - w.startTime))
 		return c
 	}
+
+	//fmt.Printf("Worker [%v], NOT done, in time [%v], should take [%v]\n", w.id, (clock - w.startTime), w.willTake)
 	return nil
 }
 
-func (w *Worker) assign(s *Step) bool {
+// assign accepts new work if it it's not busy
+func (w *Worker) assign(s *Step, clock *int) bool {
 	if w.currentStep != nil {
 		return false
 	}
 	w.currentStep = s
-	w.willTake = num(w.currentStep.id) - 'A' + 1
-	//w.willTake += 60
+	w.currentStep.assigned = true
+	w.willTake = int(w.currentStep.id[0]) - 'A' + 1
+	w.willTake += extra_time
+	w.startTime = *clock
+
+	//fmt.Printf("Worker Assigned [%v][%s], start [%v], willtake [%v]\n", w.id, w.currentStep.id, w.startTime, w.willTake)
 
 	return true
 }
 
-func determineSequence(steps Steps, completed *Steps) {
-	noParents := func() Steps {
-		var ts Steps
-		for _, s := range steps {
-			if len(s.parents) == 0 {
-				ts = append(ts, s)
-			}
-		}
-		return ts
-	}
+func sequenceAndAssignSteps(steps *Steps, completed *Steps, workers *Workers, clock *int) {
+	//fmt.Println("Clock:", *clock)
+	//fmt.Println("Whole:", steps)
 
-	nexts := noParents()
-	if len(nexts) == 0 {
-		// we're done
+	if *clock > 1000 {
+		fmt.Println("Too much time passed, exit")
 		return
 	}
 
-	sort.Slice(nexts, func(i, j int) bool {
-		return nexts[i].id < nexts[j].id
-	})
-
-	finished := assignWork(nexts)
-	for _, s := range finished {
-		steps = steps.delete(s)
+	// first see if the workers are done
+	for _, w := range *workers {
+		done := w.isCompleted(*clock)
+		if done != nil {
+			steps.delete(done)
+			*completed = append(*completed, done)
+		}
 	}
-	*completed = append(*completed, finished...)
 
-	if len(steps) > 0 {
-		determineSequence(steps, completed)
+	// find ones that have no parents
+	var noParents Steps
+	for _, s := range *steps {
+		if len(s.parents) == 0 && !s.assigned {
+			noParents = append(noParents, s)
+		}
+	}
+
+	if len(noParents) > 0 {
+		sort.Slice(noParents, func(i, j int) bool {
+			return noParents[i].id < noParents[j].id
+		})
+
+		assignWork(&noParents, workers, clock)
+	}
+
+	if len(*steps) > 0 {
+		*clock++
+		sequenceAndAssignSteps(steps, completed, workers, clock)
 	}
 	return
 }
 
-func assignWork(nexts Steps) (completed Steps) {
-	return Steps{nexts[0]}
+func assignWork(nexts *Steps, workers *Workers, clock *int) (completed Steps) {
+	// try to assign each step
+	for _, s := range *nexts {
+		assigned := false
+		// check each worker for availability
+		for i, _ := range *workers {
+			assigned = (*workers)[i].assign(s, clock)
+			if assigned {
+				break
+			}
+		}
+		if !assigned {
+			return completed
+		}
+	}
+
+	return completed
 }
 
-func parse(d string) []Step {
-	steps := Steps{}
-
+func parse(d string) (steps Steps) {
 	scanner := bufio.NewScanner(strings.NewReader(d))
 	for scanner.Scan() {
 		val := scanner.Text()
@@ -153,16 +135,22 @@ func main() {
 	steps := parse(data)
 
 	final := Steps{}
-	determineSequence(steps, &final)
-	fmt.Println("Instruction sequence:", final)
-}
-
-func num(s string) int {
-	i, err := strconv.Atoi(strings.TrimSpace(s))
-	if err != nil {
-		panic(err)
+	w := Workers{}
+	for i := 1; i < worker_count; i++ {
+		w = append(w, &Worker{id: i})
 	}
-	return i
+
+	clock := 0
+	sequenceAndAssignSteps(&steps, &final, &w, &clock)
+
+	fmt.Println("Time:", clock)
+
+	seq := ""
+	for _, s := range final {
+		seq += s.id
+	}
+
+	fmt.Println("Final sequence:", seq)
 }
 
 const data = `

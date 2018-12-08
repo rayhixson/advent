@@ -27,23 +27,27 @@ func (n Node) String() string {
 	return s
 }
 
-/*
-not working
-func (n Node) Dump() {
-	s := fmt.Sprintf("%d - ", n.ID)
-	hyphenCount := 1 + len(n.MetaData) + n.Len()
-
-	for i := 0; i < hyphenCount; i++ {
-		s += "- "
+func (n Node) NodeValue() (val int) {
+	if n.ChildCount == 0 {
+		// if it has no children just sum the metas
+		for _, e := range n.MetaData {
+			val += e
+		}
+	} else {
+		// otherwise refer to children and sum those metas
+		for _, childRef := range n.MetaData {
+			if childRef == 0 {
+				// don't count it
+			} else if childRef > n.ChildCount {
+				// dont' count it
+			} else {
+				val += n.Children[childRef-1].NodeValue()
+			}
+		}
 	}
 
-	fmt.Println(s)
-
-	for _, c := range n.Children {
-		c.Dump()
-	}
+	return val
 }
-*/
 
 func (n Node) CountMetaData() (sum int) {
 	for _, e := range n.MetaData {
@@ -106,6 +110,7 @@ func main() {
 	tree := parseTree(license)
 	sum := tree.CountMetaData()
 	fmt.Println("Sum of all the meta data entries: ", sum)
+	fmt.Println("Node value of root: ", tree.NodeValue())
 }
 
 func num(s string) int {

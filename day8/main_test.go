@@ -19,13 +19,13 @@ func TestGiven(t *testing.T) {
 	}
 }
 
-/*
-func TestHyphen(t *testing.T) {
+func TestNodeValue(t *testing.T) {
 	tree := parseTree(test_license)
-	tree.Dump()
+	v := tree.NodeValue()
 
-	t.Error("XXX")
+	if v != 66 {
+		t.Error("Wrong node value:", v)
+	}
 }
-*/
 
 const test_license = `2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2`

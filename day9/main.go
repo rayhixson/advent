@@ -3,27 +3,24 @@ package main
 import "fmt"
 
 type Marble struct {
-	Value   int
-	Current bool
-	Next    *Marble
-	Prev    *Marble
+	Value int
+	Next  *Marble
+	Prev  *Marble
 }
 
 func ZeroMarble() *Marble {
 	return &Marble{
-		Value:   0,
-		Current: true,
-		Next:    nil,
-		Prev:    nil,
+		Value: 0,
+		Next:  nil,
+		Prev:  nil,
 	}
 }
 
 func (m *Marble) Add(v int) *Marble {
 	//fmt.Println("Adding:", v)
 	new := &Marble{
-		Value:   v,
-		Current: true,
-		Prev:    m,
+		Value: v,
+		Prev:  m,
 	}
 
 	if m.Next != nil {
@@ -53,22 +50,15 @@ func (m *Marble) Remove() (next *Marble) {
 	return m.Next
 }
 
-func (m *Marble) FindCurrent() *Marble {
-	if m.Current {
-		return m
-	}
-	return m.Next.FindCurrent()
-}
-
-func (m Marble) String() string {
-	if m.Current {
+func (m *Marble) String(current bool) string {
+	if current {
 		return fmt.Sprintf("(%d) ", m.Value)
 	}
 	return fmt.Sprintf("%d ", m.Value)
 }
 
 func (m Marble) Debug() {
-	fmt.Printf("%d <- %d -> %d == Current: %v\n", m.Prev.Value, m.Value, m.Next.Value, m.Current)
+	fmt.Printf("%d <- %d -> %d\n", m.Prev.Value, m.Value, m.Next.Value)
 }
 
 type Player struct {
@@ -79,16 +69,18 @@ type Player struct {
 type Players []*Player
 
 type GameBoard struct {
-	CurrentTurn int
-	LastMarble  int
-	MarbleValue int
-	ZeroMarble  *Marble
-	People      Players
+	CurrentTurn   int
+	LastMarble    int
+	MarbleValue   int
+	ZeroMarble    *Marble
+	CurrentMarble *Marble
+	People        Players
 }
 
 func NewGameBoard(players, lastMarble int) GameBoard {
 	g := GameBoard{LastMarble: lastMarble}
 	g.ZeroMarble = ZeroMarble()
+	g.CurrentMarble = g.ZeroMarble
 
 	for i := 0; i < players; i++ {
 		g.People = append(g.People, &Player{ID: i + 1})
@@ -100,7 +92,7 @@ func (g GameBoard) Dump(playerID int) {
 	s := fmt.Sprintf("[%d] ", playerID)
 
 	for c := g.ZeroMarble; c.Next != nil; c = c.Next {
-		s += c.String()
+		s += c.String(c == g.CurrentMarble)
 
 		if c.Next == g.ZeroMarble {
 			break
@@ -120,8 +112,7 @@ func (g GameBoard) HighScore() int {
 }
 
 func (g *GameBoard) PlaceMarble(value int, player *Player) {
-	c := g.ZeroMarble.FindCurrent()
-	c.Current = false
+	c := g.CurrentMarble
 
 	if value%23 == 0 {
 		//fmt.Printf("mod 23: %d\n", value)
@@ -133,13 +124,15 @@ func (g *GameBoard) PlaceMarble(value int, player *Player) {
 			c = c.Prev
 		}
 
-		c.Remove().Current = true
+		g.CurrentMarble = c.Remove()
 		player.Score += c.Value
 	} else {
 		if c.Next != nil {
-			c.Next.Add(value)
+			new := c.Next.Add(value)
+			g.CurrentMarble = new
 		} else {
-			c.Add(value)
+			new := c.Add(value)
+			g.CurrentMarble = new
 		}
 	}
 }
@@ -167,6 +160,10 @@ func main() {
 	g := NewGameBoard(439, 71307)
 	g.Play()
 	fmt.Println("High Score:", g.HighScore())
+
+	g = NewGameBoard(439, 7130700)
+	g.Play()
+	fmt.Println("100 times larger:", g.HighScore())
 }
 
 const data = `439 players; last marble is worth 71307 points`

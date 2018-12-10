@@ -7,12 +7,9 @@ import (
 
 func TestGiven(t *testing.T) {
 	points := parseInput(test_data)
-	image := GenerateImage(&points, 0)
+	image, time := FindImage(&points)
+	fmt.Println("In time:", time)
 	fmt.Println(image.Dump())
-	for i := 1; i < 5; i++ {
-		image = image.CloneImageAtTime(&points, i)
-		fmt.Println(image.Dump())
-	}
 	t.Error("Not done")
 }
 

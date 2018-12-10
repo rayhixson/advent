@@ -14,6 +14,7 @@ type Point struct {
 	VelocityY int
 }
 
+// Where will a point in time t given its velocity
 func (p Point) Where(time int) (int, int) {
 	if time == 0 {
 		return p.X, p.Y
@@ -24,37 +25,25 @@ func (p Point) Where(time int) (int, int) {
 
 type Points []*Point
 
-func (points Points) String() string {
-	s := ""
-	for _, p := range points {
-		s += fmt.Sprintln(*p)
-	}
-	return s
-}
-
 type Image struct {
-	Grid  [][]int
+	Grid  [][]byte
 	XZero int
 	YZero int
-	MinX  int
-	MaxX  int
-	MinY  int
-	MaxY  int
 }
 
-func newImage(minX, maxX, minY, maxY int) Image {
-	//	fmt.Printf("Image: %d, %d, %d, %d\n", minX, maxX, minY, maxY)
-	image := Image{MinX: minX, MaxX: maxX, MinY: minY, MaxY: maxY}
-	image.XZero = -1 * minX
-	image.YZero = -1 * minY
-
-	for i := 0; i < (maxX - minX + 1); i++ {
-		image.Grid = append(image.Grid, []int{})
-		for j := 0; j < (maxY - minY + 1); j++ {
-			image.Grid[i] = append(image.Grid[i], 0)
-		}
+func newImage(minX, maxX, minY, maxY int) *Image {
+	//fmt.Printf("Image: %d, %d, %d, %d\n", minX, minY, maxX, maxY)
+	image := Image{
+		XZero: minX,
+		YZero: minY,
 	}
-	return image
+
+	image.Grid = make([][]byte, (maxX - minX + 1))
+	for x := range image.Grid {
+		image.Grid[x] = make([]byte, maxY-minY+1)
+	}
+
+	return &image
 }
 
 func (image Image) Dump() string {
@@ -73,24 +62,13 @@ func (image Image) Dump() string {
 }
 
 func (image *Image) Place(x, y int) {
-	//	fmt.Printf("--> %+v\n", *p)
-	//	fmt.Printf("place at: %d, %d\n", image.XZero+p.X, image.YZero+p.Y)
-	image.Grid[image.XZero+x][image.YZero+y] = 1
+	image.Grid[x-image.XZero][y-image.YZero] = 1
 }
 
-func (i Image) CloneImageAtTime(points *Points, time int) Image {
-	image := newImage(i.MinX, i.MaxX, i.MinY, i.MaxY)
-
-	for _, p := range *points {
-		image.Place(p.Where(time))
-	}
-	return image
-}
-
-func GenerateImage(points *Points, time int) Image {
+func (points Points) FindBounds(time int) (int, int, int, int) {
 	maxX, maxY := 0, 0
-	minX, minY := 0, 0
-	for _, p := range *points {
+	minX, minY := 99999, 99999
+	for _, p := range points {
 		x, y := p.Where(time)
 		if x > maxX {
 			maxX = x
@@ -106,11 +84,28 @@ func GenerateImage(points *Points, time int) Image {
 		}
 	}
 
-	i := newImage(minX, maxX, minY, maxY)
-	for _, p := range *points {
-		i.Place(p.Where(time))
+	return minX, maxX, minY, maxY
+}
+
+func FindImage(points *Points) (*Image, int) {
+	minAvg := 9999999999
+	for time := 0; time < 1000000; time++ {
+		minX, maxX, minY, maxY := points.FindBounds(time)
+
+		// The answer is when the distance between the points is smallest
+		avg := (maxX-minX)/2 + (maxY+minY)/2
+		if avg < minAvg {
+			minAvg = avg
+		} else {
+			minTime := time - 1
+			image := newImage(points.FindBounds(minTime))
+			for _, p := range *points {
+				image.Place(p.Where(minTime))
+			}
+			return image, minTime
+		}
 	}
-	return i
+	return nil, -1
 }
 
 func parseInput(d string) (points Points) {
@@ -136,6 +131,13 @@ func parseInput(d string) (points Points) {
 }
 
 func main() {
+	points := parseInput(data)
+	image, time := FindImage(&points)
+	fmt.Println("In time t, found image:", time)
+
+	if image != nil {
+		fmt.Println(image.Dump())
+	}
 }
 
 func num(s string) int {

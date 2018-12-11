@@ -13,8 +13,7 @@ func TestGiven(t *testing.T) {
 	t.Error("Not done")
 }
 
-const test_data = `
-position=< 9,  1> velocity=< 0,  2>
+const test_data = `position=< 9,  1> velocity=< 0,  2>
 position=< 7,  0> velocity=<-1,  0>
 position=< 3, -2> velocity=<-1,  1>
 position=< 6, 10> velocity=<-2, -1>

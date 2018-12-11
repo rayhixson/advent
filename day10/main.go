@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"strconv"
 	"strings"
@@ -109,24 +108,17 @@ func FindImage(points *Points) (*Image, int) {
 }
 
 func parseInput(d string) (points Points) {
-	parse := func(match, l string) (int, int) {
-		l = l[strings.Index(l, match):]
-		open := strings.Index(l, "<") + 1
-		close := strings.Index(l, ">")
-		xy := strings.Split(l[open:close], ",")
-		return num(xy[0]), num(xy[1])
+	r := strings.NewReader(d)
+	for {
+		p := Point{}
+		_, err := fmt.Fscanf(r, "position=<%d, %d> velocity=<%d, %d>\n", &p.X, &p.Y, &p.VelocityX, &p.VelocityY)
+		if err != nil {
+			break
+		}
+
+		points = append(points, &p)
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(d))
-	for scanner.Scan() {
-		val := scanner.Text()
-		if val != "" {
-			p := Point{}
-			p.X, p.Y = parse("position", val)
-			p.VelocityX, p.VelocityY = parse("velocity", val)
-			points = append(points, &p)
-		}
-	}
 	return points
 }
 
@@ -148,8 +140,7 @@ func num(s string) int {
 	return i
 }
 
-const data = `
-position=< 41710,  52012> velocity=<-4, -5>
+const data = `position=< 41710,  52012> velocity=<-4, -5>
 position=<-20558, -20616> velocity=< 2,  2>
 position=<-41271,  52017> velocity=< 4, -5>
 position=< 31365, -41361> velocity=<-3,  4>

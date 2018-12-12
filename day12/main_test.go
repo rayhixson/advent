@@ -19,10 +19,11 @@ func TestGiven(t *testing.T) {
 		fmt.Printf("Gen %d: %s\n", i, n)
 	}
 
-	fmt.Println("Total", n.SumLives())
+	sum, xsum := n.SumLives(0)
+	fmt.Println("Total", sum)
 
-	if n.SumLives() != 325 {
-		t.Error("Wrong sum: ", n.SumLives())
+	if sum != 325 {
+		t.Error("Wrong sum: ", sum, xsum)
 	}
 }
 

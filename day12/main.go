@@ -48,16 +48,18 @@ func (r Row) String() string {
 	return s
 }
 
-func (r Row) SumLives() int {
+func (r Row) SumLives(extraOffset int) (int, uint64) {
 	sum := 0
+	var xsum uint64
 	for i, p := range r.Pots {
 		if p == '#' {
 			x := i + r.ZeroOffset
-			//fmt.Println("Val:", x)
+			y := uint64(x) + uint64(extraOffset)
 			sum += x
+			xsum += y
 		}
 	}
-	return sum
+	return sum, xsum
 }
 
 func NewRow(s string, offset int) Row {
@@ -115,14 +117,18 @@ func NextGen(row Row, keys *Notes) Row {
 func main() {
 	notes := ReadNotes(keys)
 	n := NewRow(initialState, 0)
-	//gen := 50000000000
-	gen := 20
+	targetgen := 50000000000
+	gen := 500
 	for i := 1; i <= gen; i++ {
 		n = NextGen(n, &notes)
 	}
 	fmt.Printf("Gen %d: %s\n", gen, n)
 
-	fmt.Println("Total", n.SumLives())
+	// I noticed that the pattern went to a steady state, so assuming it stays the same till
+	// the end just shift everything
+	xgen := targetgen - gen
+	reg, xtra := n.SumLives(xgen)
+	fmt.Printf("Totals: %d [%d] : %d [%d]\n", gen, reg, targetgen, xtra)
 }
 
 const initialState = `##.###.......#..#.##..#####...#...#######....##.##.##.##..#.#.##########...##.##..##.##...####..####`

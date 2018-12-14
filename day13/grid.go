@@ -8,53 +8,56 @@ import (
 // map left,up,down,right to what would be underneath that pattern
 func Reveal(tomatch string) rune {
 	val, ok := coveredSpotPatterns[tomatch]
-
 	/*
-		for k, v := range CoveredSpotPatterns {
+		for k, v := range coveredSpotPatterns {
 			b, err := regexp.MatchString(tomatch, k)
 			if err != nil {
-				panic(fmt.Sprintf("Bad regexp: %s, %v", tomatch, k))
+				panic(fmt.Sprintf("Bad string [%s] regexp match [%s]", tomatch, k))
 			}
 			if b {
 				return v
 			}
 		}
 	*/
-
 	if !ok {
-		panic(fmt.Sprintf("Illegal covered spot state: [%s]\n", tomatch))
+		panic(fmt.Errorf("Illegal covered spot state: [%s]\n", tomatch))
 	}
 	return val
 }
 
 var coveredSpotPatterns = map[string]rune{
-	"-  -":  '-',
-	" || ":  '|',
-	" \\+ ": '|',
-	"-  \\": '-',
-	"-|/ ":  '+',
-	"- | ":  '\\',
-	"-|/-":  '+',
-	"+  -":  '-',
-	"-  /":  '-',
-	"-||-":  '+',
-	"-|  ":  '/',
-	" |/ ":  '|',
-	"-  +":  '-',
-	" \\| ": '|',
-	"-/|-":  '+',
-	"  +-":  '/',
-	"/ --":  '-',
-	">  -":  '-',
-	"+- \\": '-',
-	"--| ":  '\\',
-	"- \\-": '+',
-	"/ -+":  '-',
-	"\\ -+": '-',
-	" v--":  '\\',
-	"-- +":  '-',
-	" +||":  '|',
-	"-- -":  '-',
+	`|++|`: '|',
+	`|+||`: '|',
+	` |+ `: '|',
+	` ++|`: '|',
+	` || `: '|',
+	` \+ `: '|',
+	` |/ `: '|',
+	` \| `: '|',
+	` +||`: '|',
+	`+--+`: '-',
+	`-  -`: '-',
+	`-  \`: '-',
+	`+  -`: '-',
+	`-  /`: '-',
+	`-  +`: '-',
+	`/ --`: '-',
+	`>  -`: '-',
+	`+- \`: '-',
+	`/ -+`: '-',
+	`\ -+`: '-',
+	`-- +`: '-',
+	`-- -`: '-',
+	`-|/-`: '+',
+	`-||-`: '+',
+	`-|/ `: '+',
+	`-/|-`: '+',
+	`- \-`: '+',
+	`- | `: '\\',
+	`--| `: '\\',
+	` v--`: '\\',
+	`  +-`: '/',
+	`-|  `: '/',
 }
 
 type Grid struct {

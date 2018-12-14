@@ -39,11 +39,16 @@ func parse(data string) *Grid {
 }
 
 func main() {
+	defer func() {
+		if err := recover(); nil != err {
+			fmt.Println(err)
+		}
+	}()
+
 	g := parse(data)
 
 	ticks := 100
 	click, colliders := g.Run(ticks)
-
 	if len(colliders) == 0 {
 		fmt.Println("DIdn't find collider in n ticks:", ticks)
 		return

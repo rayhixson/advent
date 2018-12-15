@@ -5,86 +5,9 @@ import (
 	"strings"
 )
 
-// map left,up,down,right to what would be underneath that pattern
-func Reveal(tomatch string) rune {
-	val, ok := coveredSpotPatterns[tomatch]
-	/*
-		for k, v := range coveredSpotPatterns {
-			b, err := regexp.MatchString(tomatch, k)
-			if err != nil {
-				panic(fmt.Sprintf("Bad string [%s] regexp match [%s]", tomatch, k))
-			}
-			if b {
-				return v
-			}
-		}
-	*/
-	if !ok {
-		panic(fmt.Errorf("Illegal covered spot state: [%s]\n", tomatch))
-	}
-	return val
-}
-
-var coveredSpotPatterns = map[string]rune{
-	`|++|`: '|',
-	`|+||`: '|',
-	` |+ `: '|',
-	` ++|`: '|',
-	` || `: '|',
-	` \+ `: '|',
-	` |/ `: '|',
-	` \| `: '|',
-	` +||`: '|',
-	`+--+`: '-',
-	`-  -`: '-',
-	`-  \`: '-',
-	`+  -`: '-',
-	`-  /`: '-',
-	`-  +`: '-',
-	`/ --`: '-',
-	`>  -`: '-',
-	`+- \`: '-',
-	`/ -+`: '-',
-	`\ -+`: '-',
-	`-- +`: '-',
-	`-- -`: '-',
-	`-|/-`: '+',
-	`-||-`: '+',
-	`-|/ `: '+',
-	`-/|-`: '+',
-	`- \-`: '+',
-	`- | `: '\\',
-	`--| `: '\\',
-	` v--`: '\\',
-	`  +-`: '/',
-	`-|  `: '/',
-}
-
 type Grid struct {
 	Tracks   []string
 	AllCarts Carts
-}
-
-func (g Grid) UncoverPoint(x, y int) rune {
-	//fmt.Println("Looking under:", x, y)
-	// check for boarders
-	left, right, up, down := " ", " ", " ", " "
-	if x > 0 {
-		left = string(g.Tracks[y][x-1])
-	}
-	if x < len(g.Tracks[0])-1 {
-		right = string(g.Tracks[y][x+1])
-	}
-	if y > 0 {
-		up = string(g.Tracks[y-1][x])
-	}
-	if y < len(g.Tracks)-1 {
-		down = string(g.Tracks[y+1][x])
-	}
-	key := left + up + down + right
-	s := Reveal(key)
-	//fmt.Printf("Found: %s => [%s]\n", key, string(s))
-	return s
 }
 
 func (g Grid) String() string {
@@ -97,21 +20,36 @@ func (g *Grid) NextTrack(x, y int) byte {
 	return g.Tracks[y][x]
 }
 
-func (g *Grid) UpdateMove(c *Cart, xdif, ydif int) {
-	// set where the cart was to should be underneath
+func (g *Grid) UpdateMove(c *Cart, xdif, ydif int) (*Cart, *Cart) {
+	newX := c.X + xdif
+	newY := c.Y + ydif
+
+	// see if it's a collision
+	for _, cc := range g.AllCarts {
+		if cc.X == newX && cc.Y == newY {
+			return cc, c
+		}
+	}
+
+	// set the track back to what is under the cart
 	row := g.Tracks[c.Y]
-	g.Tracks[c.Y] = row[:c.X] + string(g.UncoverPoint(c.X, c.Y)) + row[c.X+1:]
+	g.Tracks[c.Y] = row[:c.X] + string(c.TrackUnderneath) + row[c.X+1:]
 
 	// set the cart to the new location
-	c.X += xdif
-	c.Y += ydif
+	c.X = newX
+	c.Y = newY
+
+	// record what was under the cart
+	c.TrackUnderneath = rune(g.Tracks[c.Y][c.X])
 
 	// redraw the cart in the new location
 	row = g.Tracks[c.Y]
 	g.Tracks[c.Y] = row[:c.X] + string(c.Direction) + row[c.X+1:]
+
+	return nil, nil
 }
 
-func (g *Grid) Click() {
+func (g *Grid) Click() (a, b *Cart) {
 	g.AllCarts.Sort()
 	for _, c := range g.AllCarts {
 		//fmt.Println("Click cart:", *c)
@@ -150,22 +88,24 @@ func (g *Grid) Click() {
 		}
 
 		// update cart and grid state
-		g.UpdateMove(c, nextX, nextY)
+		a, b = g.UpdateMove(c, nextX, nextY)
+		if a != nil {
+			return a, b
+		}
 	}
+	return nil, nil
 }
 
 // run simulation and return location and tick of first collision
-func (g *Grid) Run(maxTicks int) (tick int, colliders Carts) {
+func (g *Grid) Run(maxTicks int) (int, *Cart, *Cart) {
 	for i := 0; i < maxTicks; i++ {
-		g.Click()
-		//dump(g)
-		collidings := g.AllCarts.Collisions()
-		if len(collidings) > 0 {
-			return i, collidings
+		a, b := g.Click()
+		if a != nil {
+			return i, a, b
 		}
 	}
 
-	return tick, colliders
+	return maxTicks, nil, nil
 }
 
 func dump(g *Grid) {

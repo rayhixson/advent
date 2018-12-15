@@ -10,18 +10,25 @@ var RightTurns = map[rune]rune{'^': '>', '>': 'v', 'v': '<', '<': '^'}
 
 type Cart struct {
 	// one of <,>,^,v
-	Direction rune
-	LastTurn  Turn
-	X         int
-	Y         int
+	Direction       rune
+	TrackUnderneath rune
+	LastTurn        Turn
+	X               int
+	Y               int
 }
 
 func NewCart(x, y int, dir rune) *Cart {
+	t := '|'
+	if dir == '>' || dir == '<' {
+		t = '-'
+	}
+
 	return &Cart{
-		Direction: dir,
-		LastTurn:  RightTurn,
-		X:         x,
-		Y:         y,
+		Direction:       dir,
+		TrackUnderneath: t,
+		LastTurn:        RightTurn,
+		X:               x,
+		Y:               y,
 	}
 }
 

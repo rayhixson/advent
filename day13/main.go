@@ -47,18 +47,14 @@ func main() {
 
 	g := parse(data)
 
-	ticks := 100
-	click, colliders := g.Run(ticks)
-	if len(colliders) == 0 {
+	ticks := 1000
+	click, a, _ := g.Run(ticks)
+	if a == nil {
 		fmt.Println("DIdn't find collider in n ticks:", ticks)
 		return
 	}
-	if len(colliders) != 2 {
-		fmt.Println("Wrong number:", colliders)
-		return
-	}
 
-	fmt.Println("Collision at:", colliders[0].X, colliders[0].Y, click)
+	fmt.Println("Collision at:", a.X, a.Y, click)
 }
 
 const data = `

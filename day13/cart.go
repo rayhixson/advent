@@ -12,6 +12,7 @@ type Cart struct {
 	// one of <,>,^,v
 	Direction       rune
 	TrackUnderneath rune
+	Crashed         bool
 	LastTurn        Turn
 	X               int
 	Y               int
@@ -64,11 +65,11 @@ type Carts []*Cart
 func (c Carts) Sort() {
 	// update carts in sequence
 	sort.Slice(c, func(i, j int) bool {
-		if c[i].X < c[j].X {
+		if c[i].Y < c[j].Y {
 			return true
 		}
-		if c[i].X == c[j].X {
-			return c[i].Y < c[j].Y
+		if c[i].Y == c[j].Y {
+			return c[i].X < c[j].X
 		}
 		return false
 	})

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -20,6 +21,19 @@ func TestGiven(t *testing.T) {
 	}
 }
 
+func TestCrash(t *testing.T) {
+	g := parse(crash_test)
+
+	dump(g)
+	ticks := 5
+	_, a := g.Run2(ticks)
+
+	fmt.Println(a)
+	if a.X != 6 || a.Y != 4 {
+		t.Error("Wrong", a)
+	}
+}
+
 const test_data = `
 /->-\        
 |   |  /----\
@@ -27,3 +41,12 @@ const test_data = `
 | | |  | v  |
 \-+-/  \-+--/
   \------/   `
+
+const crash_test = `
+/>-<\  
+|   |  
+| /<+-\
+| | | v
+\>+</ |
+  |   ^
+  \<->/`

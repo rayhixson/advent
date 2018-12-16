@@ -39,22 +39,30 @@ func parse(data string) *Grid {
 }
 
 func main() {
-	defer func() {
-		if err := recover(); nil != err {
-			fmt.Println(err)
-		}
-	}()
+	/*
+		g := parse(data)
 
+		ticks := 1000
+		click, a, _ := g.Run(ticks)
+		if a == nil {
+			fmt.Println("DIdn't find collider in n ticks:", ticks)
+			return
+		}
+
+		fmt.Println("Collision at:", a.X, a.Y, click)
+	*/
 	g := parse(data)
 
-	ticks := 1000
-	click, a, _ := g.Run(ticks)
-	if a == nil {
-		fmt.Println("DIdn't find collider in n ticks:", ticks)
-		return
+	ticks := 20000
+	click, a := g.Run2(ticks)
+
+	if a != nil {
+		fmt.Println("Last cart:", a)
+	} else {
+		fmt.Println("Nope last after ticks:", click)
+		fmt.Println("Carts left:", g.AllCarts)
 	}
 
-	fmt.Println("Collision at:", a.X, a.Y, click)
 }
 
 const data = `

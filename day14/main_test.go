@@ -28,9 +28,31 @@ func TestGiven(t *testing.T) {
 }
 
 func TestPart2(t *testing.T) {
-	count := findSequence("51589")
+	count := findSequence(5, 1, 5, 8, 9)
+
+	if count != 9 {
+		t.Error("Wrong:", count)
+	}
+
+	count = findSequence(0, 1, 2, 4, 5)
 
 	if count != 5 {
 		t.Error("Wrong:", count)
+		panic("not 5")
 	}
+
+	count = findSequence(9, 2, 5, 1, 0)
+
+	if count != 18 {
+		t.Error("Wrong:", count)
+		panic("not 18")
+	}
+
+	count = findSequence(5, 9, 4, 1, 4)
+
+	if count != 2018 {
+		t.Error("Wrong:", count)
+		panic("not 2018")
+	}
+
 }

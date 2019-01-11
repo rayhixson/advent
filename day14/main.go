@@ -17,12 +17,32 @@ func find10After(n int) ([]int, string) {
 	return ten, s
 }
 
+func findSequence(seq ...int) int {
+	r := doit(100000000)
+
+	len := len(seq)
+	for i, _ := range *r {
+		section := (*r)[i : i+len]
+		eq := true
+		for j, v := range section {
+			if v != seq[j] {
+				eq = false
+			}
+		}
+		if eq {
+			fmt.Printf("section [%v] == seq [%v]\n", section, seq)
+			return i
+		}
+	}
+	return -1
+}
+
 func doit(n int) *[]int {
 	recipes := make([]int, 0, 500000)
 	elf1 := 0
 	elf2 := 1
 	recipes = append(recipes, 3, 7, 1, 0)
-	dump(&recipes, elf1, elf2)
+	//dump(&recipes, elf1, elf2)
 
 	for i := 0; i < n; i++ {
 		sum := recipes[elf1] + recipes[elf2]
@@ -70,4 +90,7 @@ func dump(recipes *[]int, e1, e2 int) {
 func main() {
 	_, s := find10After(509671)
 	fmt.Println("Ten: ", s)
+
+	c := findSequence(5, 0, 9, 6, 7, 1)
+	fmt.Println("Found after:", c)
 }

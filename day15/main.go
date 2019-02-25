@@ -301,6 +301,9 @@ func (b *Battlefield) Move(u *Unit, next *Point) {
 
 func (b Battlefield) BuryTheDead(u *Unit) {
 	if u.HitScore <= 0 {
+		if u.Location.Type == 'E' {
+			panic("Elf died!!!")
+		}
 		u.Location.Type = '.'
 		u.Location.Soldier = nil
 		u.Location = nil

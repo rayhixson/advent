@@ -9,12 +9,20 @@ type Unit struct {
 	Location    *Point
 }
 
+const ElfPower = 13
+
 func NewUnit(x, y int, where *Point) *Unit {
-	return &Unit{
+	u := Unit{
 		HitScore:    200,
 		AttackPower: 3,
 		Location:    where,
 	}
+
+	if where.Type == 'E' {
+		u.AttackPower = ElfPower
+	}
+
+	return &u
 }
 
 type Units []*Unit

@@ -18,6 +18,8 @@ type Opcoder func(*Device, Set)
 
 var Opcodes []Opcoder
 
+var KnownOpcodes [16]Opcoder
+
 type Sample struct {
 	Before Device
 	After  Device
@@ -52,6 +54,18 @@ func parse(reader io.Reader) (ss []*Sample) {
 
 func findMatches(s *Sample) (matches []Opcoder) {
 	for _, f := range Opcodes {
+		// also if it's a known opcode don't compare
+		known := false
+		for _, k := range KnownOpcodes {
+			if k != nil && opName(f) == opName(k) {
+				known = true
+				break
+			}
+		}
+		if known {
+			continue
+		}
+
 		orig := s.Before
 		f(&orig, s.Input)
 		if orig == s.After {
@@ -60,6 +74,52 @@ func findMatches(s *Sample) (matches []Opcoder) {
 		}
 	}
 	return
+}
+
+func findThree(samples []*Sample) {
+	total := 0
+	for _, s := range samples {
+		matches := findMatches(s)
+		if len(matches) >= 3 {
+			//fmt.Println(s)
+			//fmt.Println("Matches: ", len(matches))
+			total++
+		}
+	}
+
+	fmt.Printf("Total samples [%v] matching 3 or more: %v\n", len(samples), total)
+}
+
+func doit(samples []*Sample) {
+
+	for i := 0; i < 16; i++ {
+		opCounts := make(map[string]int)
+		sampleCount := 0
+		for _, s := range samples {
+			if s.Input[0] == i {
+				sampleCount++
+				//fmt.Println("Sample: ", s)
+				matches := findMatches(s)
+				//fmt.Printf("%v: %v\n", i, names(matches))
+				for _, m := range matches {
+					n := opName(m)
+					opCounts[n] = opCounts[n] + 1
+				}
+			}
+		}
+		if len(opCounts) > 0 {
+			fmt.Printf("%v (%v) ==> %v\n", i, sampleCount, opCounts)
+		}
+		//break
+	}
+
+}
+
+func names(oa []Opcoder) (s string) {
+	for _, o := range oa {
+		s += opName(o) + " "
+	}
+	return s
 }
 
 func main() {
@@ -73,17 +133,8 @@ func main() {
 
 	samples := parse(r)
 
-	total := 0
-	for _, s := range samples {
-		matches := findMatches(s)
-		if len(matches) >= 3 {
-			//fmt.Println(s)
-			//fmt.Println("Matches: ", len(matches))
-			total++
-		}
-	}
-
-	fmt.Printf("Total samples [%v] matching 3 or more: %v\n", len(samples), total)
+	//findThree(samples)
+	doit(samples)
 }
 
 func opName(i interface{}) string {
@@ -127,6 +178,23 @@ func eq(x, y int) int {
 }
 
 func init() {
+	KnownOpcodes[11] = eqri
+	KnownOpcodes[10] = eqrr
+	KnownOpcodes[7] = eqir
+	KnownOpcodes[15] = gtri
+	KnownOpcodes[13] = gtrr
+	KnownOpcodes[4] = gtir
+	KnownOpcodes[2] = banr
+	KnownOpcodes[3] = bani
+	KnownOpcodes[5] = setr
+	KnownOpcodes[8] = seti
+	KnownOpcodes[14] = mulr
+	KnownOpcodes[1] = muli
+	KnownOpcodes[0] = bori
+	KnownOpcodes[12] = borr
+	KnownOpcodes[6] = addr
+	KnownOpcodes[9] = addi
+
 	Opcodes = []Opcoder{
 		addr,
 		addi,

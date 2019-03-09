@@ -90,7 +90,7 @@ func findThree(samples []*Sample) {
 	fmt.Printf("Total samples [%v] matching 3 or more: %v\n", len(samples), total)
 }
 
-func doit(samples []*Sample) {
+func testEachOpCodeAgainstSamples(samples []*Sample) {
 
 	for i := 0; i < 16; i++ {
 		opCounts := make(map[string]int)
@@ -115,6 +115,18 @@ func doit(samples []*Sample) {
 
 }
 
+func runTestProgram(reader io.Reader) Device {
+	scanner := bufio.NewScanner(reader)
+	d := Device{}
+	for scanner.Scan() {
+		s := Set{}
+		fmt.Sscanf(scanner.Text(), "%d %d %d %d", &s[0], &s[1], &s[2], &s[3])
+		KnownOpcodes[s[0]](&d, s)
+	}
+
+	return d
+}
+
 func names(oa []Opcoder) (s string) {
 	for _, o := range oa {
 		s += opName(o) + " "
@@ -126,15 +138,24 @@ func main() {
 	/*
 		samples := parse(strings.NewReader(test))
 	*/
-	r, err := os.Open("input")
+	/*
+		r, err := os.Open("input")
+		if err != nil {
+			panic(err)
+		}
+
+		samples := parse(r)
+
+		//findThree(samples)
+		testEachOpCodeAgainstSamples(samples)
+	*/
+
+	r, err := os.Open("test_program")
 	if err != nil {
 		panic(err)
 	}
-
-	samples := parse(r)
-
-	//findThree(samples)
-	doit(samples)
+	s := runTestProgram(r)
+	fmt.Println("Final: ", s)
 }
 
 func opName(i interface{}) string {

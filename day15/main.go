@@ -318,7 +318,7 @@ func (b Battlefield) GoRound() bool {
 
 	for _, turner := range allUnits {
 		if turner.HitScore <= 0 {
-			fmt.Println("Skipping dead: ", turner)
+			//fmt.Println("Skipping dead: ", turner)
 			continue
 		}
 
@@ -397,9 +397,9 @@ func parse(data string) *Battlefield {
 
 func main() {
 	b := parse(input)
-	b.Dump("")
+	//b.Dump("")
 	lastFullRound, sum := b.Battle()
-	b.Dump("")
+	//b.Dump("")
 
 	fmt.Printf("Final Round * Sum: %v * %v = %v\n", lastFullRound, sum, lastFullRound*sum)
 }
